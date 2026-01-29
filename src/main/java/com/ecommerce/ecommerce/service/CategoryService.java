@@ -5,6 +5,7 @@ import com.ecommerce.ecommerce.dto.CategoryResponseDTO;
 import com.ecommerce.ecommerce.entity.Category;
 import com.ecommerce.ecommerce.exception.BadRequestException;
 import com.ecommerce.ecommerce.repository.CategoryRepository;
+import com.ecommerce.ecommerce.repository.ProdutoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +15,11 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private  final ProdutoRepository produtoRepository;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, ProdutoRepository produtoRepository) {
         this.categoryRepository = categoryRepository;
+        this.produtoRepository=produtoRepository;
     }
 
     @Transactional
@@ -41,26 +44,61 @@ public class CategoryService {
         );
     }
 
+
+    @Transactional(readOnly = true)
     public List<CategoryResponseDTO> listarTodas() {
-        System.out.println("[CategoryService] Chamado listarTodas()");
-        long count = categoryRepository.count();
-        System.out.println("[CategoryService] Total de categorias no banco: " + count);
-        
+        System.out.println("[CategoryService] Iniciando listarTodas()");
         List<Category> categorias = categoryRepository.findAll();
-        System.out.println("[CategoryService] Categorias recuperadas: " + categorias.size());
-        
-        return categorias.stream()
+        System.out.println("[CategoryService] Total de categorias encontradas: " + categorias.size());
+
+        List<CategoryResponseDTO> resultado = categorias.stream()
                 .map(categoria -> {
                     System.out.println("[CategoryService] Mapeando categoria: " + categoria.getNome());
+
+                    int quantidadeProdutos = (int) produtoRepository.countByCategoriaId(categoria.getId());
+
+                    System.out.println("[CategoryService]   Produtos: " + quantidadeProdutos);
+
                     return new CategoryResponseDTO(
-                        categoria.getId(),
-                        categoria.getNome(),
-                        categoria.getDescricao(),
-                        categoria.getImagemUrl(),
-                        categoria.getProdutos() != null ? categoria.getProdutos().size() : 0
+                            categoria.getId(),
+                            categoria.getNome(),
+                            categoria.getDescricao(),
+                            categoria.getImagemUrl(),
+                            quantidadeProdutos
                     );
                 })
                 .toList();
+
+        System.out.println("[CategoryService] Mapeamento concluído com sucesso");
+        return resultado;
+    }
+
+    public List<CategoryResponseDTO> listarSimples() {
+        try {
+            System.out.println("[CategoryService] Iniciando listarSimples() - SEM ACESSAR PRODUTOS");
+            List<Category> categorias = categoryRepository.findAll();
+            System.out.println("[CategoryService] Total de categorias encontradas: " + categorias.size());
+            
+            List<CategoryResponseDTO> resultado = categorias.stream()
+                    .map(categoria -> {
+                        System.out.println("[CategoryService] Mapeando categoria simples: " + categoria.getId() + " - " + categoria.getNome());
+                        return new CategoryResponseDTO(
+                                categoria.getId(),
+                                categoria.getNome(),
+                                categoria.getDescricao(),
+                                categoria.getImagemUrl(),
+                                0 // Não acessa getProdutos() para evitar lazy loading
+                        );
+                    })
+                    .toList();
+            
+            System.out.println("[CategoryService] Mapeamento simples concluído com sucesso: " + resultado.size() + " categorias");
+            return resultado;
+        } catch (Exception e) {
+            System.err.println("[CategoryService] ERRO em listarSimples(): " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     public CategoryResponseDTO buscarPorId(Long id) {
@@ -72,7 +110,7 @@ public class CategoryService {
                 categoria.getNome(),
                 categoria.getDescricao(),
                 categoria.getImagemUrl(),
-                categoria.getProdutos() != null ? categoria.getProdutos().size() : 0
+                categoria.getProdutos().size()
         );
     }
 
@@ -97,7 +135,7 @@ public class CategoryService {
                 atualizada.getNome(),
                 atualizada.getDescricao(),
                 atualizada.getImagemUrl(),
-                atualizada.getProdutos() != null ? atualizada.getProdutos().size() : 0
+                atualizada.getProdutos().size()
         );
     }
 
@@ -106,7 +144,7 @@ public class CategoryService {
         Category categoria = categoryRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Categoria não encontrada"));
 
-        if (categoria.getProdutos() != null && !categoria.getProdutos().isEmpty()) {
+        if (!categoria.getProdutos().isEmpty()) {
             throw new BadRequestException("Não é possível deletar categoria com produtos associados");
         }
 
