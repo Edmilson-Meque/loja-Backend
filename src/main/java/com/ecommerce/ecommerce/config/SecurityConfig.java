@@ -3,6 +3,7 @@ package com.ecommerce.ecommerce.config;
 import com.ecommerce.ecommerce.security.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -40,10 +41,13 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // IMPORTANTE: Rotas de teste devem vir PRIMEIRO
+                        .requestMatchers("/api/test/**").permitAll()
+                        .requestMatchers("/test/**").permitAll()
+                        
                         // Rotas públicas
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/test").permitAll()
-                        .requestMatchers("/test/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/categorias").permitAll()
                         .requestMatchers("/api/categorias/{id}").permitAll()
@@ -53,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/produtos/promocoes").permitAll()
                         .requestMatchers("/api/produtos/ofertas-do-dia").permitAll()
                         .requestMatchers("/api/produtos/destaques").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/produtos", "/api/produtos/**").permitAll()
 
                         // Imagens - endpoints públicos para visualização
                         .requestMatchers("/api/imagens/health").permitAll()
@@ -73,15 +78,39 @@ public class SecurityConfig {
                         .requestMatchers("/api/imagens/{imageId}/**").hasRole("ADMIN")
                         .requestMatchers("/api/imagens/produto/{produtoId}/todas").hasRole("ADMIN")
 
-                        .requestMatchers("/api/conteudos/**").permitAll()
-                        .requestMatchers("/api/categorias-conteudo/**").permitAll()
-                        .requestMatchers("/api/tags/**").permitAll()
-                        .requestMatchers("/api/contatos").permitAll() //
-
+                        // CMS - Conteúdos
+                        .requestMatchers("/api/conteudos").permitAll()
+                        .requestMatchers("/api/conteudos/{id}").permitAll()
+                        .requestMatchers("/api/conteudos/slug/**").permitAll()
+                        .requestMatchers("/api/conteudos/tipo/**").permitAll()
+                        .requestMatchers("/api/conteudos/destaques").permitAll()
+                        .requestMatchers("/api/conteudos/recentes").permitAll()
+                        .requestMatchers("/api/conteudos/mais-vistos").permitAll()
+                        .requestMatchers("/api/conteudos/validar-slug").permitAll()
+                        
                         .requestMatchers("/api/conteudos/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/categorias-conteudo/**").hasRole("ADMIN") // Exceto GETs públicos
-                        .requestMatchers("/api/tags/**").hasRole("ADMIN") // Exceto GETs públicos
-                        .requestMatchers("/api/contatos/**").hasRole("ADMIN") // Exceto POST
+                        .requestMatchers("POST", "/api/conteudos").hasRole("ADMIN")
+                        .requestMatchers("PUT", "/api/conteudos/**").hasRole("ADMIN")
+                        .requestMatchers("DELETE", "/api/conteudos/**").hasRole("ADMIN")
+
+                        // Categorias de Conteúdo
+                        .requestMatchers("/api/categorias-conteudo").permitAll()
+                        .requestMatchers("/api/categorias-conteudo/{id}").permitAll()
+                        .requestMatchers("POST", "/api/categorias-conteudo").hasRole("ADMIN")
+                        .requestMatchers("PUT", "/api/categorias-conteudo/**").hasRole("ADMIN")
+                        .requestMatchers("DELETE", "/api/categorias-conteudo/**").hasRole("ADMIN")
+
+                        // Tags
+                        .requestMatchers("/api/tags").permitAll()
+                        .requestMatchers("/api/tags/{id}").permitAll()
+                        .requestMatchers("POST", "/api/tags").hasRole("ADMIN")
+                        .requestMatchers("PUT", "/api/tags/**").hasRole("ADMIN")
+                        .requestMatchers("DELETE", "/api/tags/**").hasRole("ADMIN")
+
+                        // Contatos
+                        .requestMatchers("POST", "/api/contatos").permitAll()
+                        .requestMatchers("/api/contatos/**").hasRole("ADMIN")
+                        
                         // Demais rotas exigem autenticação
                         .anyRequest().authenticated()
                 )
