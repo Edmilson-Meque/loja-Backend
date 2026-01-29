@@ -11,6 +11,7 @@ import com.ecommerce.ecommerce.exception.BadRequestException;
 import com.ecommerce.ecommerce.repository.CartItemRepository;
 import com.ecommerce.ecommerce.repository.CartRepository;
 import com.ecommerce.ecommerce.repository.ProdutoRepository;
+import com.ecommerce.ecommerce.service.ImageService;
 import com.ecommerce.ecommerce.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,17 +29,20 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProdutoRepository produtoRepository;
+    private final ImageService imageService;
 
     public CartService(
             CartRepository cartRepository,
             CartItemRepository cartItemRepository,
             UserRepository userRepository,
-            ProdutoRepository produtoRepository
+            ProdutoRepository produtoRepository,
+            ImageService imageService
     ) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.userRepository = userRepository;
         this.produtoRepository = produtoRepository;
+        this.imageService = imageService;
     }
 
     private User getCurrentUser() {
@@ -208,6 +212,18 @@ public class CartService {
         dto.setPrecoUnitario(item.getPrecoUnitario());
         dto.setSubtotal(item.getSubtotal());
         dto.setEstoqueDisponivel(produto.getQuantidadeEstoque());
+
+        // Tentar obter imagem principal do produto
+        try {
+            var imagens = imageService.getProductImages(produto.getId());
+            if (imagens != null && !imagens.isEmpty()) {
+                var principal = imagens.stream().filter(i -> Boolean.TRUE.equals(i.isPrincipal())).findFirst();
+                String url = principal.map(p -> p.getUrlImagem()).orElse(imagens.get(0).getUrlImagem());
+                dto.setImagemUrl(url);
+            }
+        } catch (Exception e) {
+            // Ignorar erros de imagem
+        }
 
         return dto;
     }
