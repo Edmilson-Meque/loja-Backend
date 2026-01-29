@@ -2,39 +2,48 @@ package com.ecommerce.ecommerce.controller;
 
 import com.ecommerce.ecommerce.dto.CategoryRequestDTO;
 import com.ecommerce.ecommerce.dto.CategoryResponseDTO;
-import com.ecommerce.ecommerce.repository.CategoryRepository;
 import com.ecommerce.ecommerce.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/categorias")
 public class CategoryController {
 
     private final CategoryService categoryService;
-    private final CategoryRepository categoryRepository;
 
-    public CategoryController(CategoryService categoryService, CategoryRepository categoryRepository) {
+    public CategoryController(CategoryService categoryService) {
         this.categoryService = categoryService;
-        this.categoryRepository = categoryRepository;
     }
 
     // PUBLIC ENDPOINTS
     @GetMapping
     public List<CategoryResponseDTO> listarTodas() {
+        System.out.println("[CategoryController] GET /api/categorias - Iniciando");
         try {
-            System.out.println("[CategoryController] GET /api/categorias chamado");
             List<CategoryResponseDTO> resultado = categoryService.listarTodas();
             System.out.println("[CategoryController] Retornando " + resultado.size() + " categorias");
             return resultado;
         } catch (Exception e) {
-            System.err.println("[CategoryController] ERRO em listarTodas: " + e.getMessage());
+            System.err.println("[CategoryController] ERRO: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    @GetMapping("/listar-simples")
+    public List<CategoryResponseDTO> listarSimples() {
+        System.out.println("[CategoryController] GET /api/categorias/listar-simples - Iniciando (SEM ACESSAR PRODUTOS)");
+        try {
+            List<CategoryResponseDTO> resultado = categoryService.listarSimples();
+            System.out.println("[CategoryController] Retornando " + resultado.size() + " categorias (simples)");
+            return resultado;
+        } catch (Exception e) {
+            System.err.println("[CategoryController] ERRO no listarSimples: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }
@@ -66,17 +75,5 @@ public class CategoryController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletar(@PathVariable Long id) {
         categoryService.deletar(id);
-    }
-
-    // DEBUG ENDPOINT
-    @GetMapping("/debug/status")
-    public Map<String, Object> debugStatus() {
-        Map<String, Object> status = new HashMap<>();
-        long totalCategorias = categoryRepository.count();
-        status.put("total_categorias", totalCategorias);
-        status.put("timestamp", System.currentTimeMillis());
-        status.put("status", "OK");
-        System.out.println("[DEBUG] Status check - Total categorias: " + totalCategorias);
-        return status;
     }
 }
