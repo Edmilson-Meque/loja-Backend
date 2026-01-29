@@ -10,6 +10,9 @@ import com.ecommerce.ecommerce.repository.CategoryRepository;
 import com.ecommerce.ecommerce.repository.ProdutoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -33,12 +36,21 @@ public class ProdutoService {
         this.favoriteService = favoriteService;
         this.imageService = imageService;
     }
+    private boolean isAuthenticated() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null
+                && auth.isAuthenticated()
+                && !(auth instanceof AnonymousAuthenticationToken);
+    }
 
+    @Transactional(readOnly = true)
     public List<ProdutoResponseDTO> listarTodos() {
         return produtoRepository.findAll().stream()
+                .filter(produto -> !imageService.getProductImages(produto.getId()).isEmpty())
                 .map(this::convertToDTO)
                 .toList();
     }
+
 
     public ProdutoResponseDTO buscarPorId(Long id) {
         Produto produto = produtoRepository.findById(id)
@@ -47,31 +59,63 @@ public class ProdutoService {
         return convertToDTO(produto);
     }
 
+    @Transactional(readOnly = true)
     public List<ProdutoResponseDTO> buscarPorCategoria(Long categoriaId) {
         return produtoRepository.findAll().stream()
                 .filter(produto -> produto.getCategoria() != null &&
                         produto.getCategoria().getId().equals(categoriaId))
+                .filter(produto -> {
+                    try {
+                        return !imageService.getProductImages(produto.getId()).isEmpty();
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
                 .map(this::convertToDTO)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<ProdutoResponseDTO> buscarEmPromocao() {
         return produtoRepository.findAll().stream()
                 .filter(Produto::isEmPromocao)
+                .filter(produto -> {
+                    try {
+                        return !imageService.getProductImages(produto.getId()).isEmpty();
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
                 .map(this::convertToDTO)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<ProdutoResponseDTO> buscarOfertasDoDia() {
         return produtoRepository.findAll().stream()
                 .filter(Produto::isOfertaDoDia)
+                .filter(produto -> {
+                    try {
+                        return !imageService.getProductImages(produto.getId()).isEmpty();
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
                 .map(this::convertToDTO)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<ProdutoResponseDTO> buscarEmDestaque() {
         return produtoRepository.findAll().stream()
                 .filter(Produto::isEmDestaque)
+                .filter(produto -> {
+                    try {
+                        return !imageService.getProductImages(produto.getId()).isEmpty();
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
                 .map(this::convertToDTO)
                 .toList();
     }
@@ -103,7 +147,6 @@ public class ProdutoService {
         Optional.ofNullable(dto.isEmDestaque()).ifPresent(produto::setEmDestaque);
 
         Produto salvo = produtoRepository.save(produto);
-
         return convertToDTO(salvo);
     }
 
@@ -140,7 +183,6 @@ public class ProdutoService {
         Optional.ofNullable(dto.isEmDestaque()).ifPresent(produto::setEmDestaque);
 
         Produto atualizado = produtoRepository.save(produto);
-
         return convertToDTO(atualizado);
     }
 
@@ -181,11 +223,26 @@ public class ProdutoService {
         dto.setPrecoAtual(produto.getPrecoAtual().doubleValue());
         dto.setPercentualDesconto(produto.getPercentualDesconto());
 
-        try {
+        if (isAuthenticated()) {
             dto.setFavoritado(favoriteService.isFavorito(produto.getId()));
+        } else {
+            dto.setFavoritado(false); // público sempre false (ou null, se quiser)
+        }
+        // Tentar popular a imagem principal e total de imagens
+        try {
+            List<ProductImageResponseDTO> imagens = imageService.getProductImages(produto.getId());
+            if (imagens != null && !imagens.isEmpty()) {
+                var principal = imagens.stream().filter(ProductImageResponseDTO::isPrincipal).findFirst();
+                if (principal.isPresent()) {
+                    dto.setImagemPrincipal(principal.get().getUrlImagem());
+                } else {
+                    dto.setImagemPrincipal(imagens.get(0).getUrlImagem());
+                }
+                dto.setTotalImagens(imagens.size());
+                dto.setImagensUrls(imagens.stream().map(ProductImageResponseDTO::getUrlImagem).toList());
+            }
         } catch (Exception e) {
-            // Se não estiver autenticado ou erro, mantém false
-            dto.setFavoritado(false);
+            // Ignorar erros ao buscar imagens
         }
 
         return dto;
@@ -228,4 +285,5 @@ public class ProdutoService {
 
         return dto;
     }
+
 }
