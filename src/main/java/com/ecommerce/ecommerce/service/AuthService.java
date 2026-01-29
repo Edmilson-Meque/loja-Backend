@@ -10,8 +10,10 @@ import com.ecommerce.ecommerce.exception.UnauthorizedException;
 import com.ecommerce.ecommerce.repository.RoleRepository;
 import com.ecommerce.ecommerce.repository.UserRepository;
 import com.ecommerce.ecommerce.security.JwtService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Set;
 
@@ -53,9 +55,8 @@ public class AuthService {
     public RegisterResponseDTO register(RegisterRequestDTO dto) {
 
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new RuntimeException("Email já registrado");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "EMAIL_ALREADY_USED");
         }
-
         Role roleCliente = roleRepository.findByNome("ROLE_CLIENTE")
                 .orElseGet(() -> {
                     Role novaRole = new Role("ROLE_CLIENTE");
