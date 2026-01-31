@@ -19,8 +19,9 @@ private String uploadDir;
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(location)
                 .setCachePeriod(3600);
-    }
-     registry.addResourceHandler("/products/**")
+      
+           registry.addResourceHandler("/products/**")
             .addResourceLocations(location + "products/")
             .setCachePeriod(3600);
+    }
 }
