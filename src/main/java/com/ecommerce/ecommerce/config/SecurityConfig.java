@@ -154,6 +154,7 @@ public WebSecurityCustomizer webSecurityCustomizer() {
 
         // Permitir origens para testes locais
         configuration.setAllowedOrigins(Arrays.asList(
+            "https://loja-backend-production-b85a.up.railway.app",
                 "http://localhost",
                 "http://127.0.0.1:5500",  // Live Server do VS Code
                 "http://localhost:5500",   // Live Server
