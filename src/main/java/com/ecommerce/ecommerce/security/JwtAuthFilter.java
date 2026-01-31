@@ -27,6 +27,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
+        String path = request.getRequestURI();
+
+// ✅ pula recursos públicos
+if (path.startsWith("/uploads/")
+        || path.startsWith("/products/")
+        || path.startsWith("/api/produtos")
+        || path.startsWith("/api/categorias")
+        || path.startsWith("/api/imagens/health")
+        || path.startsWith("/api/imagens/ping")) {
+    filterChain.doFilter(request, response);
+    return;
+}
+
+// Se não tem Authorization, não bloqueia: só segue
+String authHeader = request.getHeader("Authorization");
+if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+    filterChain.doFilter(request, response);
+    return;
+}
+
     ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
