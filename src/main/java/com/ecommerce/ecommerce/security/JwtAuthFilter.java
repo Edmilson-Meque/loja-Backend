@@ -27,59 +27,45 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
-        String path = request.getRequestURI();
-
-// ✅ pula recursos públicos
-if (path.startsWith("/uploads/")
-        || path.startsWith("/products/")
-        || path.startsWith("/api/produtos")
-        || path.startsWith("/api/categorias")
-        || path.startsWith("/api/imagens/health")
-        || path.startsWith("/api/imagens/ping")) {
-    filterChain.doFilter(request, response);
-    return;
-}
-
-// Se não tem Authorization, não bloqueia: só segue
-String authHeader = request.getHeader("Authorization");
-if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-    filterChain.doFilter(request, response);
-    return;
-}
-
     ) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
+        String path = request.getRequestURI();
 
-        // Se não tem token, continua
+        // ✅ 1) Rotas públicas: não tenta validar JWT
+        if (path.startsWith("/uploads/")
+                || path.startsWith("/products/")
+                || path.startsWith("/api/produtos")
+                || path.startsWith("/api/categorias")
+                || path.startsWith("/api/imagens/health")
+                || path.startsWith("/api/imagens/ping")
+                || path.startsWith("/api/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        final String authHeader = request.getHeader("Authorization");
+
+        // ✅ 2) Sem token: não bloqueia, só segue
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
+        final String jwt = authHeader.substring(7);
 
         try {
-            userEmail = jwtService.extractEmail(jwt);
+            String userEmail = jwtService.extractEmail(jwt);
 
-            // Se tem email e não está autenticado
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                // Valida o token
                 if (jwtService.isTokenValid(jwt)) {
-                    // Cria autenticação
                     UsernamePasswordAuthenticationToken authToken = jwtService.getAuthentication(jwt);
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-
         } catch (Exception e) {
             logger.error("Erro ao processar JWT: " + e.getMessage());
-            // Não limpa o contexto de segurança
+            // importante: NÃO retornar 403 aqui; apenas deixa seguir sem autenticar
         }
 
         filterChain.doFilter(request, response);
