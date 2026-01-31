@@ -29,7 +29,7 @@ public class ImageService {
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
-    @Value("${app.upload.base-url:http://localhost:8080/uploads}")
+    @Value("${app.upload.base-url:https://loja-backend-production-b85a.up.railway.app/api/produtos/uploads}")
     private String baseUrl;
 
     @Value("${app.upload.allowed-extensions:jpg,jpeg,png,gif,webp}")
