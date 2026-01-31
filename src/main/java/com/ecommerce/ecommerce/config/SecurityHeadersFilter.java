@@ -24,14 +24,15 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
         response.setHeader("X-XSS-Protection", "1; mode=block");
         response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
         response.setHeader("Content-Security-Policy",
-                "default-src 'self'; " +
-                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-                        "style-src 'self' 'unsafe-inline'; " +
-                        "img-src 'self' data: https:; " +
-                        "font-src 'self'; " +
-                        "connect-src 'self'; " +
-                        "frame-ancestors 'none';"
-        );
+    "default-src 'self' http://localhost:5500 https://loja-backend-production-b85a.up.railway.app; " +
+    "img-src 'self' data: blob: http: https:; " +
+    "connect-src 'self' http://localhost:5500 https://loja-backend-production-b85a.up.railway.app; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "font-src 'self'; " +
+    "frame-ancestors 'none';"
+);
+
         response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
         response.setHeader("Permissions-Policy",
                 "geolocation=(), microphone=(), camera=()");
