@@ -66,6 +66,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/imagens/{imageId}").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
+
 
                         // Rotas que exigem autenticação (qualquer role)
                         .requestMatchers("/api/favoritos/**").authenticated()
