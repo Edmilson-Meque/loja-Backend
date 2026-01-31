@@ -19,4 +19,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations(location)
                 .setCachePeriod(3600);
     }
+     registry.addResourceHandler("/products/**")
+            .addResourceLocations(location + "products/")
+            .setCachePeriod(3600);
 }
