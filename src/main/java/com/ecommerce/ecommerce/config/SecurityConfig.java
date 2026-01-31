@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -120,6 +121,15 @@ public class SecurityConfig {
 
         return http.build();
     }
+    @Bean
+public WebSecurityCustomizer webSecurityCustomizer() {
+    return web -> web.ignoring().requestMatchers(
+            "/products/**",
+            "/uploads/**",
+            "/favicon.ico",
+            "/error"
+    );
+}
 
     @Bean
     public PasswordEncoder passwordEncoder() {
