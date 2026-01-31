@@ -8,8 +8,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${app.upload.dir:${user.home}/.ecommerce/uploads}")
-    private String uploadDir;
+  @Value("${app.upload.dir:uploads}")
+private String uploadDir;
+
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
