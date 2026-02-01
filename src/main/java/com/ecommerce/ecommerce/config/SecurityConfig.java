@@ -142,10 +142,6 @@ public WebSecurityCustomizer webSecurityCustomizer() {
     ) throws Exception {
         return config.getAuthenticationManager();
     }
-    @Bean
-public WebSecurityCustomizer webSecurityCustomizer() {
-    return (web) -> web.ignoring().requestMatchers("/products/**", "/uploads/**");
-}
 
     // ← ADICIONE ESTE MÉTODO PARA CORS ↓
     @Bean
