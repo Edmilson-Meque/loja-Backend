@@ -22,41 +22,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.jwtService = jwtService;
     }
 
-    /**
-     * ✅ Rotas que NÃO devem passar por validação JWT.
-     * Isso evita 403 em recursos estáticos como /products/** e /uploads/**.
-     */
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        String path = request.getRequestURI();
+        String path = request.getServletPath();
 
-        // ✅ Preflight (CORS)
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
-
-        // ✅ Arquivos estáticos (imagens)
-        if (path.startsWith("/products/")) return true;
-        if (path.startsWith("/uploads/")) return true;
-
-        // ✅ Rotas públicas do teu sistema
-        if (path.startsWith("/api/auth")) return true;
-        if (path.startsWith("/api/produtos")) return true;
-        if (path.startsWith("/api/categorias")) return true;
-
-        // ✅ Imagens públicas (endpoints)
-        if (path.startsWith("/api/imagens/health")) return true;
-        if (path.startsWith("/api/imagens/ping")) return true;
-        if (path.startsWith("/api/imagens/produto/")) return true;
-        // Se você quiser deixar /api/imagens/{id} público também:
-        if (path.startsWith("/api/imagens/")) return true;
-
-        // ✅ Outros comuns (se tiver swagger)
-        if (path.startsWith("/swagger-ui")) return true;
-        if (path.startsWith("/v3/api-docs")) return true;
-
-        // ✅ Erro padrão do Spring
-        if (path.equals("/error")) return true;
-
-        return false;
+        // ✅ Ignorar processamento JWT para arquivos estáticos e rotas públicas
+        return path.startsWith("/products/") || 
+               path.startsWith("/uploads/") || 
+               path.startsWith("/api/auth/") ||
+               path.startsWith("/api/produtos") ||
+               path.startsWith("/api/categorias") ||
+               path.startsWith("/api/imagens/health") ||
+               path.startsWith("/api/imagens/ping") ||
+               path.startsWith("/api/imagens/produto/") ||
+               path.equals("/error") ||
+               path.startsWith("/swagger-ui") ||
+               path.startsWith("/v3/api-docs");
     }
 
     @Override
@@ -68,7 +49,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
-        // ✅ Sem token: não bloqueia, só segue
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -80,7 +60,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String userEmail = jwtService.extractEmail(jwt);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
                 if (jwtService.isTokenValid(jwt)) {
                     UsernamePasswordAuthenticationToken authToken = jwtService.getAuthentication(jwt);
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -88,9 +67,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // ✅ Importante: NÃO retornar 403 aqui.
-            // Apenas não autentica e deixa seguir para o Spring Security decidir.
-            logger.error("Erro ao processar JWT: {}", e.getMessage());
+            // Log do erro mas deixa o Spring Security decidir se barra ou não (baseado na config das rotas)
+            logger.error("Erro na validação JWT: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);
