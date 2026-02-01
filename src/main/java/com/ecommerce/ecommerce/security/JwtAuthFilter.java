@@ -23,24 +23,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        String path = request.getServletPath();
-
-        // ✅ Ignorar processamento JWT para arquivos estáticos e rotas públicas
-        return path.startsWith("/products/") || 
-               path.startsWith("/uploads/") || 
-               path.startsWith("/api/auth/") ||
-               path.startsWith("/api/produtos") ||
-               path.startsWith("/api/categorias") ||
-               path.startsWith("/api/imagens/health") ||
-               path.startsWith("/api/imagens/ping") ||
-               path.startsWith("/api/imagens/produto/") ||
-               path.equals("/error") ||
-               path.startsWith("/swagger-ui") ||
-               path.startsWith("/v3/api-docs");
-    }
-
-    @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
@@ -48,27 +30,36 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String userEmail;
 
+        // Se não tem token, continua
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        final String jwt = authHeader.substring(7);
+        jwt = authHeader.substring(7);
 
         try {
-            String userEmail = jwtService.extractEmail(jwt);
+            userEmail = jwtService.extractEmail(jwt);
 
+            // Se tem email e não está autenticado
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                // Valida o token
                 if (jwtService.isTokenValid(jwt)) {
+                    // Cria autenticação
                     UsernamePasswordAuthenticationToken authToken = jwtService.getAuthentication(jwt);
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
+
         } catch (Exception e) {
-            // Log do erro mas deixa o Spring Security decidir se barra ou não (baseado na config das rotas)
-            logger.error("Erro na validação JWT: " + e.getMessage());
+            logger.error("Erro ao processar JWT: " + e.getMessage());
+            // Não limpa o contexto de segurança
         }
 
         filterChain.doFilter(request, response);
