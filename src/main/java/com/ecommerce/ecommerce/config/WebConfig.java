@@ -12,16 +12,15 @@ public class WebConfig implements WebMvcConfigurer {
 private String uploadDir;
 
 
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Mapeia /uploads/** para o diretório do sistema de arquivos configurado
-        String location = "file:" + uploadDir.replace("\\\\", "/") + "/";
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(location)
-                .setCachePeriod(3600);
-      
-           registry.addResourceHandler("/products/**")
-            .addResourceLocations(location + "products/")
-            .setCachePeriod(3600);
-    }
+   @Override
+public void addResourceHandlers(ResourceHandlerRegistry registry) {
+      String location = "file:" + uploadDir.replace("\\", "/") + "/";
+      registry.addResourceHandler("/uploads/**")
+              .addResourceLocations(location)
+              .setCachePeriod(3600);
+  
+             registry.addResourceHandler("/products/**")
+              .addResourceLocations(location + "products/")
+              .setCachePeriod(3600);
+  }
 }
