@@ -121,7 +121,7 @@ public class SecurityConfig {
 
         return http.build();
     }
-    @Bean
+@Bean
 public WebSecurityCustomizer webSecurityCustomizer() {
     return web -> web.ignoring().requestMatchers(
             "/products/**",
@@ -130,6 +130,7 @@ public WebSecurityCustomizer webSecurityCustomizer() {
             "/error"
     );
 }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
