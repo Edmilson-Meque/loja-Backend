@@ -29,8 +29,9 @@ public class ImageService {
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
-    @Value("${app.upload.base-url:https://loja-backend-production-b85a.up.railway.app/api/produtos/uploads}")
+   @Value("${app.upload.base-url}")
     private String baseUrl;
+
 
     @Value("${app.upload.allowed-extensions:jpg,jpeg,png,gif,webp}")
     private String[] allowedExtensions;
