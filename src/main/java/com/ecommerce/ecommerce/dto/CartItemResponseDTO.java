@@ -15,6 +15,7 @@ public class CartItemResponseDTO {
     private BigDecimal precoUnitario;
     private BigDecimal subtotal;
     private Integer estoqueDisponivel;
+    private String imagemUrl;
 
     // Constructor
     public CartItemResponseDTO() {}
@@ -52,4 +53,7 @@ public class CartItemResponseDTO {
 
     public Integer getEstoqueDisponivel() { return estoqueDisponivel; }
     public void setEstoqueDisponivel(Integer estoqueDisponivel) { this.estoqueDisponivel = estoqueDisponivel; }
+
+    public String getImagemUrl() { return imagemUrl; }
+    public void setImagemUrl(String imagemUrl) { this.imagemUrl = imagemUrl; }
 }
