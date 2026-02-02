@@ -157,6 +157,7 @@ public WebSecurityCustomizer webSecurityCustomizer() {
                 "http://localhost:5500",   // Live Server
                 "http://127.0.0.1:8080",   // Backend
                 "http://localhost:8080",   // Backend
+                "https://loja-frontend-iota.vercel.app",
                 "file://",                  // Arquivos locais
                 "null"                      // Arquivos abertos diretamente
         ));
